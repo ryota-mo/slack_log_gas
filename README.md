@@ -11,7 +11,7 @@ If you prefer English, see [README_en.md](README_en.md), please.
 
 **NOTE**:  
 スレッド内の投稿を取得するため，このプログラムでは[conversations.replies](https://api.slack.com/methods/conversations.replies)を利用します．このAPIはそれぞれのスレッドごとに1回呼び出す必要があります．さらに，`conversations.replies`はRate limitingが`Tier 3`，つまり1分間に50回程度しか呼び出すことができず超過した場合にはAPIを呼び出してもエラーが返ってきます．この制限を守るため，Google Apps Scriptの実行時間の制限(G Suite Business / Enterprise / Education以外の場合には6分程度, [https://developers.google.com/apps-script/guides/services/quotas](https://developers.google.com/apps-script/guides/services/quotas))を超える可能性があります．
-**実行時間の超過を防ぐため，1回の実行では1つのチャンネル内の投稿のみ取得します．全チャンネルのスレッドの投稿を取得するためには，チャンネル数と同じ回数実行する必用があります，**
+**実行時間の超過を防ぐため，1回の実行では1つのチャンネル内の投稿のみ取得します．全チャンネルのスレッドの投稿を取得するためには，チャンネル数と同じ回数実行する必要があります．**
 
 # Usage
 ## Step1: Slack Appを作成する
@@ -49,11 +49,10 @@ If you prefer English, see [README_en.md](README_en.md), please.
     |  folder_id  |  hogehoge  |
     | last_channel_no | -1 |
 1. GUIを用いた設定がうまくできない場合には[set_properties.gs](set_properties.gs)を用いてみてください．その際，値を自身のものに置き換えてください．
-1. `Run`関数を実行するか，トリガーの設定をします．全チャンネルの全スレッドを取得したい場合にはチャンネルの数と同じ回数の実行が必用です．
+1. `Run`関数を実行するか，トリガーの設定をします．全チャンネルの全スレッドを取得したい場合にはチャンネルの数と同じ回数の実行が必要です．
 1. "Authorization required"のポップアップが出てきた場合には言われた通り権限を設定してください．
 
 
 # Limitations
 - 残念ながら，すべてのファイルが保存されるわけではありません（解決されていません)
-- チャンネルにも送信されるスレッド内のメッセージ (thread_broadcast) は，SpreadSheetに2回書き込まれます．また，そのメッセージ以降のスレッド内の投稿が重複します．
 - スレッド内の投稿についてはチャンネルごとに前回のログ取得時の最新のログから1か月前より後に**チャンネルに**投稿された(つまりスレッド内の投稿でない)メッセージ内のスレッドを追加します．チャンネルへの投稿が1か月より前かつスレッドへの投稿が1か月以内のものは取得されません．

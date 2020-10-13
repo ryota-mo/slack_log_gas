@@ -52,5 +52,4 @@ You have to make one app of Slack in each WorkSpace. If you use a free plan (and
 
 # Limitations
 - Unfortunately, not all files are saved (not resolved)
-- Messages in a thread also sent to channel (thread_broadcast) are written twice in SpreadSheet. Also, the posts in the thread after that message will be duplicated.
 - For posts in threads, add threads in messages posted to the **channel** (that is, not posts in threads) more than one month before the latest log at the time of the previous log acquisition for each channel. Posts posted to the channel before 1 month and posted to the thread within 1 month will not be acquired.

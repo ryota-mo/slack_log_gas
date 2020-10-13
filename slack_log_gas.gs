@@ -212,7 +212,8 @@ var SpreadsheetController = (function () {
   const COL_LINK = 5; // ダウンロードファイルリンク
   const COL_TIME = 6; // 差分取得用に使用するタイムスタンプ
   const COL_REPLY_COUNT = 7; // スレッド内の投稿数
-  const COL_JSON = 8; // 念の為取得した JSON をまるごと記述しておく列
+  const COL_IS_REPLY = 8; // リプライのとき1，そうでないとき0
+  const COL_JSON = 9; // 念の為取得した JSON をまるごと記述しておく列
 
   const COL_MAX = COL_JSON;  // COL 最大値
 
@@ -262,11 +263,23 @@ var SpreadsheetController = (function () {
   };
 
   // 最後に記録したタイムスタンプ取得
-  p.getLastTimestamp = function (channel) {
+  p.getLastTimestamp = function (channel, is_reply) {
     var sheet = this.getChannelSheet(channel);
     var lastRow = sheet.getLastRow();
     if (lastRow > 0) {
-      return sheet.getRange(lastRow, COL_TIME).getValue();
+      let row_of_last_update = 0;
+      for (let row_no = lastRow; row_no >= 1; row_no--) {
+        if (parseInt(sheet.getRange(row_no, COL_IS_REPLY).getValue()) == is_reply) {
+          row_of_last_update = row_no;
+          break;
+        }
+      }
+      if (row_of_last_update === 0) {
+        return '1';
+      }
+      console.log('last timestamp row: ' + row_of_last_update);
+      console.log('last timestamp: ' + sheet.getRange(row_of_last_update, COL_TIME).getValue());
+      return sheet.getRange(row_of_last_update, COL_TIME).getValue();
     }
     return '1';
   };
@@ -321,9 +334,15 @@ var SpreadsheetController = (function () {
 
     var record = [];
     // メッセージ内容ごとに整形してスプレッドシートに書き込み
-    messages.forEach(function (msg) {
+    for (let msg of messages) {
       var date = new Date(+msg.ts * 1000);
       console.log("message: " + date);
+      
+      if ('subtype' in msg) {
+        if (msg.subtype === 'thread_broadcast') {
+          continue;
+        }
+      }
 
       var row = [];
 
@@ -355,11 +374,16 @@ var SpreadsheetController = (function () {
       if ('reply_count' in msg) {
         row[COL_REPLY_COUNT - 1] = msg.reply_count;
       }
+      row[COL_IS_REPLY - 1] = 0;
+      if ('thread_ts' in msg) {
+        if (msg.ts != msg.thread_ts){
+          row[COL_IS_REPLY - 1] = 1;
+        }}
       // メッセージの JSON 形式
       row[COL_JSON - 1] = JSON.stringify(msg);
 
       record.push(row);
-    });
+    };
 
     if (record.length > 0) {
       var range = sheet.insertRowsAfter(lastRow || 1, record.length)
@@ -386,12 +410,10 @@ function Run() {
 
   // チャンネルごとにメッセージ内容を取得 
   let first_exec_in_this_channel = false;
-  let timestamp_array = [];
   for (let ch of channelInfo) {
-    let timestamp = ssCtrl.getLastTimestamp(ch);
+    let timestamp = ssCtrl.getLastTimestamp(ch, 0);
     let messages = slack.requestMessages(ch, timestamp);
     ssCtrl.saveChannelHistory(ch, messages, memberList);
-    timestamp_array.push(timestamp);
     if (timestamp == '1') {
       first_exec_in_this_channel = true;
       break;
@@ -412,13 +434,13 @@ function Run() {
     timestamp = 0;
     first = '1';
   } else {
-    timestamp = timestamp_array[ch_num];
+    timestamp = ssCtrl.getLastTimestamp(ch, 1);
     first = (parseFloat(timestamp) - 2592000).toString();
   }
   //  チャンネル内のスレッド元のtsをすべて取得  
-  const ts_array = ssCtrl.getThreadTS(ch, timestamp);
-  console.log('ts_array.length');
-  console.log(ts_array.length);
+  console.log('first: ' + first);
+  const ts_array = ssCtrl.getThreadTS(ch, first);
+  console.log('ts_array.length: ' + ts_array.length);
   //  ts_arrayに存在するスレッドかつ最終更新以降の投稿を取得
   if (ts_array != '1') {
     const thread_messages = slack.requestThreadMessages(ch, ts_array, timestamp);
