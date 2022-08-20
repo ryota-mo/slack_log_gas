@@ -91,7 +91,7 @@ var SlackAccessor = (function () {
     console.log("==> GET " + url);
 
     let options = {
-		"headers": {
+        "headers": {
             "Authorization" : "Bearer " + encodeURIComponent(this.APIToken)
         }
     }
