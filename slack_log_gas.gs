@@ -1,5 +1,5 @@
-const FOLDER_NAME = "slack_backup";
-const SpreadSheetName = "slack_backup";
+const FOLDER_NAME = "Folder Name which is logs are saved";
+const SpreadSheetName = "SpreadSheet Name which is logs are saved";
 
 const FOLDER_ID = PropertiesService.getScriptProperties().getProperty('folder_id');
 if (!FOLDER_ID) {
