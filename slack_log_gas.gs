@@ -82,7 +82,7 @@ var SlackAccessor = (function () {
   p.requestAPI = function (path, params) {
     if (params === void 0) { params = {}; }
     var url = "https://slack.com/api/" + path + "?";
-    var qparams = [("token=" + encodeURIComponent(this.APIToken))];
+    var qparams = [];
     for (var k in params) {
       qparams.push(encodeURIComponent(k) + "=" + encodeURIComponent(params[k]));
     }
@@ -90,7 +90,12 @@ var SlackAccessor = (function () {
 
     console.log("==> GET " + url);
 
-    var response = UrlFetchApp.fetch(url);
+    let options = {
+        "headers": {
+            "Authorization" : "Bearer " + encodeURIComponent(this.APIToken)
+        }
+    }
+    var response = UrlFetchApp.fetch(url, options);
     var data = JSON.parse(response.getContentText());
     if (data.error) {
       console.log(data);
@@ -305,7 +310,7 @@ var SpreadsheetController = (function () {
       for (let i = first_row; i <= lastRow; i++) {
         if (!(sheet.getRange(i, COL_REPLY_COUNT).isBlank())) {
           ts = sheet.getRange(i, COL_TIME).getValue();
-          ts_array.push(ts.toFixed(6).toString());
+          ts_array.push(ts);
         }
       }
 
@@ -388,6 +393,9 @@ var SpreadsheetController = (function () {
     if (record.length > 0) {
       var range = sheet.insertRowsAfter(lastRow || 1, record.length)
         .getRange(lastRow + 1, 1, record.length, COL_MAX);
+      // tsを入れる列は少数が切り捨てられないよう文字列形式に設定
+      sheet.getRange(1,COL_TIME,sheet.getMaxRows(),1).setNumberFormat('@');
+      // レコードをセット
       range.setValues(record);
     }
 
